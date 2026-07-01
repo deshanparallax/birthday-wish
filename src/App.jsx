@@ -1,122 +1,185 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [step, setStep] = useState(0);
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+
+  const handleShowMe = () => {
+    if (name.trim() === '') {
+      setError('Please enter your name first! 🥺');
+      return;
+    }
+    setError('');
+    setStep(1);
+  };
+
+  const handleOpenGift = () => {
+    setStep(2);
+    triggerConfetti();
+  };
+
+  const triggerConfetti = () => {
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+      confetti({
+        particleCount: 5,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.8 },
+        colors: ['#ffb347', '#ffcc33', '#ff6b6b', '#aee1cd', '#c084fc']
+      });
+      confetti({
+        particleCount: 5,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.8 },
+        colors: ['#ffb347', '#ffcc33', '#ff6b6b', '#aee1cd', '#c084fc']
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+    frame();
+  };
+
+  // Variants for steps transitions
+  const containerVariants = {
+    hidden: { opacity: 0, scale: 0.9, y: 20 },
+    visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+    exit: { opacity: 0, scale: 1.1, y: -20, transition: { duration: 0.4, ease: "easeIn" } }
+  };
+
+  // Bouncing animation for the gift box
+  const bounceVariants = {
+    hover: { scale: 1.1 },
+    tap: { scale: 0.9 },
+    bounce: {
+      y: [0, -20, 0],
+      transition: {
+        duration: 1.5,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  };
+
+  // Spring animation for final reveal
+  const finalRevealVariants = {
+    hidden: { opacity: 0, scale: 0.3, y: 50 },
+    visible: { 
+      opacity: 1, 
+      scale: 1, 
+      y: 0,
+      transition: { 
+        type: "spring",
+        stiffness: 150,
+        damping: 10,
+        delay: 0.1
+      } 
+    },
+    exit: { opacity: 0 }
+  };
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+      <AnimatePresence mode="wait">
+      {step === 0 && (
+        <motion.div
+          key="step0"
+          className="step-container"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
         >
-          Count is {count}
-        </button>
-      </section>
+          <motion.h1 className="intro-heading">Hey there! 👋</motion.h1>
+          <motion.p className="intro-subtext">I have a small surprise for you...</motion.p>
+          <motion.input
+            className="name-input"
+            type="text"
+            placeholder="Enter your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          />
+          <AnimatePresence>
+            {error && (
+              <motion.p 
+                className="error-message"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto', y: -10 }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                {error}
+              </motion.p>
+            )}
+          </AnimatePresence>
+          <motion.button 
+            className="show-me-btn" 
+            onClick={handleShowMe}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Show Me!
+          </motion.button>
+        </motion.div>
+      )}
 
-      <div className="ticks"></div>
+      {step === 1 && (
+        <motion.div
+          key="step1"
+          className="step-container"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+        >
+          <motion.div 
+            className="gift-box"
+            variants={bounceVariants}
+            animate="bounce"
+            whileHover="hover"
+            whileTap="tap"
+            onClick={handleOpenGift}
+          >
+            🎁
+          </motion.div>
+          <motion.p className="tap-text">Tap the box to open!</motion.p>
+        </motion.div>
+      )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      {step === 2 && (
+        <motion.div
+          key="step2"
+          className="step-container"
+          variants={finalRevealVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+        >
+          <motion.h1 className="birthday-heading">
+            Happy Birthday{name ? `, ${name}` : ''}! 🎉
+          </motion.h1>
+          <motion.p className="birthday-message">
+            Wishing you a fantastic day filled with joy, laughter, and wonderful memories.
+            May all your dreams come true this year!
+          </motion.p>
+        </motion.div>
+      )}
+    </AnimatePresence>
+      <footer className="footer">
+        Created with ❤️ by Deshan
+      </footer>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
